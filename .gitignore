@@ -1,0 +1,24 @@
+*.iml
+.gradle/
+/local.properties
+/.idea/
+.DS_Store
+/build/
+app/build/
+captures/
+.externalNativeBuild/
+.cxx/
+*.apk
+*.ap_
+*.dex
+
+# Backend
+backend/node_modules/
+backend/dist/
+backend/.env
+
+# Android local
+local.properties
+
+# OS
+Thumbs.db

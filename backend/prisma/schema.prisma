@@ -1,0 +1,80 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid()) @db.Uuid
+  phone     String   @unique
+  name      String
+  kycStatus String   @default("pending") @map("kyc_status")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  devices        Device[]
+  settings       UserSettings?
+  unlockEvents   UnlockEvent[]
+  dailySummaries DailyUnlockSummary[]
+
+  @@map("users")
+}
+
+model Device {
+  id               String   @id @default(uuid()) @db.Uuid
+  userId           String   @map("user_id") @db.Uuid
+  androidDeviceId  String   @map("android_device_id")
+  fcmToken         String?  @map("fcm_token")
+  integrityVerdict String   @default("unknown") @map("integrity_verdict")
+  lastSeenAt       DateTime @default(now()) @map("last_seen_at") @db.Timestamptz
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  unlockEvents UnlockEvent[]
+
+  @@unique([userId, androidDeviceId])
+  @@map("devices")
+}
+
+model UserSettings {
+  userId            String  @id @map("user_id") @db.Uuid
+  amountPerUnlockP  Int     @default(200) @map("amount_per_unlock_p")
+  weeklyCapP        Int     @default(30000) @map("weekly_cap_p")
+  fundChoice        String  @default("NIFTY50_INDEX") @map("fund_choice")
+  paused            Boolean @default(false)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_settings")
+}
+
+model UnlockEvent {
+  id         String   @id @db.Uuid
+  userId     String   @map("user_id") @db.Uuid
+  deviceId   String   @map("device_id") @db.Uuid
+  ts         DateTime @db.Timestamptz
+  source     String
+  ingestedAt DateTime @default(now()) @map("ingested_at") @db.Timestamptz
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  device Device @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+
+  @@index([userId, ts])
+  @@map("unlock_events")
+}
+
+model DailyUnlockSummary {
+  userId          String   @map("user_id") @db.Uuid
+  date            DateTime @db.Date
+  unlockCount     Int      @map("unlock_count")
+  payableAmountP  Int      @default(0) @map("payable_amount_p")
+  capped          Boolean  @default(false)
+  computedAt      DateTime @default(now()) @map("computed_at") @db.Timestamptz
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, date])
+  @@map("daily_unlock_summary")
+}

@@ -1,0 +1,31 @@
+# Render Blueprint — deploy from https://dashboard.render.com/blueprints
+# Connect this GitHub repo, set root to this folder, apply blueprint.
+
+databases:
+  - name: unlock-counter-db
+    plan: free
+    databaseName: unlock_counter
+    user: unlock_counter
+
+services:
+  - type: web
+    name: unlock-counter-api
+    runtime: node
+    plan: free
+    rootDir: backend
+    buildCommand: npm ci && npx prisma generate && npm run build
+    startCommand: npx prisma db push && npm run start:prod
+    healthCheckPath: /v1/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: unlock-counter-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: ADMIN_API_KEY
+        generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: 30d
