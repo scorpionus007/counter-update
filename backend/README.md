@@ -42,6 +42,8 @@ Live URL (default service name): `https://unlock-counter-api.onrender.com`
 
 Health: `GET /v1/health`
 
+**Swagger UI:** `GET /docs` — browse and test all endpoints (use **Authorize** for JWT or `X-Admin-Key`).
+
 ## Android connection
 
 | Build | API URL |

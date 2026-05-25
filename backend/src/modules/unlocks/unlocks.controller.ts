@@ -1,15 +1,30 @@
 import { BadRequestException, Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
+import {
+  ApiBearerAuth,
+  ApiCreatedResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
 import { PrismaService } from '../../prisma/prisma.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { JwtPayload } from '../auth/auth.service';
-import { SyncUnlocksDto } from './sync-unlocks.dto';
+import {
+  DailySummaryResponseDto,
+  SyncUnlocksDto,
+  SyncUnlocksResponseDto,
+} from './sync-unlocks.dto';
 
+@ApiTags('Unlocks')
+@ApiBearerAuth('JWT')
 @Controller('unlocks')
 @UseGuards(JwtAuthGuard)
 export class UnlocksController {
   constructor(private readonly prisma: PrismaService) {}
 
   @Post('sync')
+  @ApiOperation({ summary: 'Sync daily unlock summaries (and optional events) to cloud' })
+  @ApiCreatedResponse({ type: SyncUnlocksResponseDto })
   async sync(@Req() req: { user: JwtPayload }, @Body() dto: SyncUnlocksDto) {
     const userId = req.user.sub;
 
@@ -65,6 +80,8 @@ export class UnlocksController {
   }
 
   @Get('summary')
+  @ApiOperation({ summary: 'Get my daily unlock history (last 30 days)' })
+  @ApiOkResponse({ type: [DailySummaryResponseDto] })
   async mySummary(@Req() req: { user: JwtPayload }) {
     const userId = req.user.sub;
     const summaries = await this.prisma.dailyUnlockSummary.findMany({

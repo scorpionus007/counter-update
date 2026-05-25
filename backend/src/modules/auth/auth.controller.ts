@@ -1,8 +1,10 @@
 import { Body, Controller, Post } from '@nestjs/common';
+import { ApiCreatedResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuthService } from './auth.service';
-import { RegisterDto } from './register.dto';
+import { RegisterDto, RegisterResponseDto } from './register.dto';
 
+@ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
   constructor(
@@ -11,7 +13,9 @@ export class AuthController {
   ) {}
 
   @Post('register')
-  async register(@Body() dto: RegisterDto) {
+  @ApiOperation({ summary: 'Register tester (name + phone + device)' })
+  @ApiCreatedResponse({ type: RegisterResponseDto })
+  async register(@Body() dto: RegisterDto): Promise<RegisterResponseDto> {
     const user = await this.prisma.user.upsert({
       where: { phone: dto.phone },
       create: {
